@@ -1,0 +1,247 @@
+svmcho
+
+import numpy as np
+import matplotlib.pyplot as plt 
+from sklearn import svm, datasets
+import sklearn.model_selection as model_selection
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
+import time
+
+from matplotlib.colors import Normalize
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import GridSearchCV
+#plt.plot([1,2,3],[5,5,6])
+#plt.show()
+
+# Cho data import
+cho_datapath = '/mnt/c/Users/isaac/Desktop/CSE447/final_project/DataMiningProject/data/6_cho_iyer/'
+cho_filename = 'cho.txt'
+
+cho_data = np.genfromtxt(cho_datapath+cho_filename)
+cho_X = cho_data [:,2:]
+cho_y = cho_data[:,1]
+cho_Xtrain, cho_Xtest, cho_ytrain, cho_ytest = model_selection.train_test_split(cho_X, cho_y, train_size=0.80, test_size=0.20, random_state=101)
+
+
+# Things you can try
+# On PIE, you can try a hilbert space
+
+# Try different kernels: Linear, Polynomial, RBF, and Sigmoid, Gaussian
+
+# Play with svm hyperparameters
+#   slack variables--> C, The C parameter trades off correct classification of training examples against maximization of the decision function’s margin. For larger values of C, a smaller margin will be                               accepted if the decision function is better at classifying all training points correctly. 
+
+#Other SVM parameters: 
+#   cache_size      ?
+#   class_weight    ?
+#   coef0           ?
+#   decision_function_shape     ?
+#   degree          ?
+#   gamma           ?
+#   kernel          rbf? linear?
+#   max_iter        ?
+#   probability     ? t/f
+#   random_state    ?
+#   shrinking       ?
+#   tol             ?
+#   verbose turn this on
+
+# doing a PCA (for Cho and Iyer)
+
+# trying different methods for making class boundaries: 1 to all others or 1 to 1 for each pair of classes
+
+# {'C': 0.1,
+#  'break_ties': False,
+#  'cache_size': 200,
+#  'class_weight': None,
+#  'coef0': 0.0,
+#  'decision_function_shape': 'ovr',
+#  'degree': 3,
+#  'gamma': 0.5,
+#  'kernel': 'rbf',
+#  'max_iter': -1,
+#  'probability': False,
+#  'random_state': None,
+#  'shrinking': True,
+#  'tol': 0.001,
+#  'verbose': False}
+
+
+
+# How does sklearn svm deal with multiple classes?
+
+
+
+
+# Utility function to move the midpoint of a colormap to be around
+# the values of interest.
+
+class MidpointNormalize(Normalize):
+
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y))
+
+
+
+
+
+# #############################################################################
+# Load and prepare data set
+#
+# dataset for grid search
+
+# cho_X
+# cho_y
+
+# It is usually a good idea to scale the data for SVM training.
+# We are cheating a bit in this example in scaling all of the data,
+# instead of fitting the transformation on the training set and
+# just applying it on the test set.
+
+scaler = StandardScaler()
+cho_Xtrain = scaler.fit_transform(cho_Xtrain)
+
+# #############################################################################
+# Train classifiers
+#
+# For an initial search, a logarithmic grid with basis
+# 10 is often helpful. Using a basis of 2, a finer
+# tuning can be achieved but at a much higher cost.
+
+C_range = np.logspace(-2, 10, 13)
+gamma_range = np.logspace(-9, 3, 13)
+# 'ovo'
+# 'ovr'
+param_grid = dict(gamma=gamma_range, C=C_range)
+cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42) # should I be using Cho_X_train?
+grid = GridSearchCV(svm.SVC(decision_function_shape='ovr'), param_grid=param_grid, cv=cv)
+grid.fit(cho_Xtrain, cho_ytrain)
+
+print("The best parameters are %s with a score of %0.2f"
+      % (grid.best_params_, grid.best_score_))
+
+# Draw heatmap of the validation accuracy as a function of gamma and C
+#
+# The score are encoded as colors with the hot colormap which varies from dark
+# red to bright yellow. As the most interesting scores are all located in the
+# 0.92 to 0.97 range we use a custom normalizer to set the mid-point to 0.92 so
+# as to make it easier to visualize the small variations of score values in the
+# interesting range while not brutally collapsing all the low score values to
+# the same color.
+
+scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
+                                                     len(gamma_range))
+
+plt.figure(figsize=(8, 6))
+plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
+plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
+           norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
+plt.xlabel('gamma')
+plt.ylabel('C')
+plt.colorbar()
+plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
+plt.yticks(np.arange(len(C_range)), C_range)
+plt.title('Validation accuracy')
+plt.show()
+
+
+
+from matplotlib.colors import Normalize
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import GridSearchCV
+
+# #############################################################################
+# Load and prepare data set
+#
+# dataset for grid search
+
+# cho_X
+# cho_y
+
+# It is usually a good idea to scale the data for SVM training.
+# We are cheating a bit in this example in scaling all of the data,
+# instead of fitting the transformation on the training set and
+# just applying it on the test set.
+
+scaler = StandardScaler()
+cho_X = scaler.fit_transform(cho_X)
+
+# #############################################################################
+# Train classifiers
+#
+# For an initial search, a logarithmic grid with basis
+# 10 is often helpful. Using a basis of 2, a finer
+# tuning can be achieved but at a much higher cost.
+
+C_range = np.logspace(-2, 10, 13)
+gamma_range = np.logspace(-9, 3, 13)
+# 'ovo'
+# 'ovr'
+param_grid = dict(gamma=gamma_range, C=C_range)
+cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42) # should I be using Cho_X_train?
+grid = GridSearchCV(SVC(decision_function_shape='ovr'), param_grid=param_grid, cv=cv)
+grid.fit(cho_X, cho_y)
+
+print("The best parameters are %s with a score of %0.2f"
+      % (grid.best_params_, grid.best_score_))
+
+# Draw heatmap of the validation accuracy as a function of gamma and C
+#
+# The score are encoded as colors with the hot colormap which varies from dark
+# red to bright yellow. As the most interesting scores are all located in the
+# 0.92 to 0.97 range we use a custom normalizer to set the mid-point to 0.92 so
+# as to make it easier to visualize the small variations of score values in the
+# interesting range while not brutally collapsing all the low score values to
+# the same color.
+
+plt.figure(figsize=(8, 6))
+plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
+plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
+           norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
+plt.xlabel('gamma')
+plt.ylabel('C')
+plt.colorbar()
+plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
+plt.yticks(np.arange(len(C_range)), C_range)
+plt.title('Validation accuracy')
+plt.show()
+
+
+cho_poly = svm.SVC(kernel='poly', gamma=0.5, degree=3, C=1, decision_function_shape='ovo', verbose=True).fit(cho_Xtrain, cho_ytrain)
+
+
+Cho sigmoid kernel experiments
+
+
+cho_sigmoid = svm.SVC(kernel='sigmoid', gamma=0.5, C=1, decision_function_shape='ovo', verbose=True).fit(cho_Xtrain, cho_ytrain)
+
+# Cho linear kernel experiments
+
+
+cho_linear = svm.SVC(kernel='linear', C=1, decision_function_shape='ovo', verbose=True).fit(cho_Xtrain, cho_ytrain)
+
+
+Cho precomputed kernel experiments
+cho_precomputed = svm.SVC(kernel='precomputed', C=1, decision_function_shape='ovo', verbose=True).fit(cho_Xtrain, cho_ytrain)
+
+cho_poly_pred = cho_poly.predict(cho_Xtest)
+cho_rbf_pred = cho_rbf.predict(cho_Xtest)
+
+cho_poly_accuracy = accuracy_score(cho_ytest, cho_poly_pred)
+cho_poly_f1 = f1_score(cho_ytest, cho_poly_pred, average='weighted')
+print('Accuracy (Polynomial Kernel): ', "%.2f" % (cho_poly_accuracy*100))
+print('F1 (Polynomial Kernel): ', "%.2f" % (cho_poly_f1*100))
+
+cho_rbf_accuracy = accuracy_score(cho_ytest, cho_rbf_pred)
+cho_rbf_f1 = f1_score(cho_ytest, cho_rbf_pred, average='weighted')
+print('Accuracy (RBF Kernel): ', "%.2f" % (cho_rbf_accuracy*100))
+print('F1 (RBF Kernel): ', "%.2f" % (cho_rbf_f1*100))
+
