@@ -1,2 +1,2 @@
 # svm_analysis
-CSE 447 Datamining Analysis with SVM
+A project where I implemented support vector machines to classify data from the Iyer, Cho, and PIE datasets. The PIE dataset was vectorized from a 2D dataset to a 1D dataset. Presentation slides can be found at https://docs.google.com/presentation/d/1dCX2oZpLcWrmMGIUheWCx27PSaIDMwws/edit?usp=sharing&ouid=101673243814713691044&rtpof=true&sd=true. The final report can be found at https://drive.google.com/file/d/1AQ3ANbuGnW4z4-Km50d1VJEMJXW5QFr5/view?usp=sharing. I wrote the Introduction and Conclusion in addition to the SVM section.
